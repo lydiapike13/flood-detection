@@ -1,4 +1,6 @@
-﻿class Program
+﻿using FloodDetection;
+
+class Program
 {
     /// <summary>
     /// Main function of the program. Retrieves the CSV files from their folder and creates the parser
