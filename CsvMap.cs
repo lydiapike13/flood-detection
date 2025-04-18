@@ -3,6 +3,8 @@ using CsvHelper.Configuration.Attributes;
 using CsvHelper.Configuration;
 using CsvHelper;
 using System.Globalization;
+using static CsvMap;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 public class CsvMap
 {
@@ -63,60 +65,74 @@ public class CsvMap
         }
     }
 
-    public CsvMap(string path, string dataType)
+    public CsvMap(string rain1, string rain2, string deviceList)
     {
-        if (path == null) throw new ArgumentNullException("path");
+        List<RainfallData> rainfall1 = CsvMapRainfall(rain1);
+        List<RainfallData> rainfall2 = CsvMapRainfall(rain2);
+        List<DeviceData> devices = CsvMapDevice(deviceList);
 
-        if (dataType == "rainfall")
+        rainfall1.AddRange(rainfall2);
+        List<RainfallByDevice> rainfallByDevice = ProcessData(rainfall1, devices);
+
+        foreach (RainfallByDevice device in rainfallByDevice)
         {
-            CsvMapRainfall(path);
+            device.PrintDevice();
+            double avg = device.CalculateAverageRainfall();
         }
-        else if (dataType == "device")
+    }
+
+    private List<RainfallByDevice> ProcessData(List<RainfallData> rain, List<DeviceData> devices)
+    {
+        List<RainfallByDevice> allData = new List<RainfallByDevice>();
+
+        // Iterates through all the devices in the device list and creates a new RainfallByDevice object to
+        // store all the rainfall readings for that device.
+        foreach (DeviceData device in devices)
         {
-            CsvMapDevice(path);
+            RainfallByDevice rainfallByDevice = new(device.DeviceId, device.DeviceName);
+            allData.Add(rainfallByDevice);
         }
-        else
+
+        foreach (RainfallData data in rain)
         {
-            throw new ArgumentException("dataType not recognised.");
+            foreach (RainfallByDevice device in allData)
+            {
+                if (data.DeviceId == device.DeviceId)
+                {
+                    device.AddReading(data.Time, data.Rainfall);
+                }
+            }
         }
+
+        return allData;
     }
 
     /// <summary>
     /// 
     /// </summary>
     /// <param name="path"></param>
-	public void CsvMapRainfall(string path)
+	public List<RainfallData> CsvMapRainfall(string path)
     {
         StreamReader reader = new(path);
         using CsvReader csv = new(reader, CultureInfo.InvariantCulture);
         csv.Context.RegisterClassMap<RainfallMap>();
         List<RainfallData> rainfallData = csv.GetRecords<RainfallData>().ToList();
 
-        foreach (RainfallData data in rainfallData)
-        {
-            Console.WriteLine("Device ID: " + data.DeviceId);
-            Console.WriteLine("Time: " + data.Time);
-            Console.WriteLine("Rainfall: " + data.Rainfall);
-        }
+        return rainfallData;
     }
 
     /// <summary>
     /// 
     /// </summary>
     /// <param name="path"></param>
-	public void CsvMapDevice(string path)
+	public List<DeviceData> CsvMapDevice(string path)
     {
         StreamReader reader = new(path);
         using CsvReader csv = new(reader, CultureInfo.InvariantCulture);
         csv.Context.RegisterClassMap<DeviceMap>();
         List<DeviceData> deviceData = csv.GetRecords<DeviceData>().ToList();
 
-        foreach (DeviceData data in deviceData)
-        {
-            Console.WriteLine("Device ID: " + data.DeviceId);
-            Console.WriteLine("Device Name: " + data.DeviceName);
-            Console.WriteLine("Location: " + data.Location);
-        }
+        return deviceData;
     }
 }
 
