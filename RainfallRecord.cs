@@ -1,8 +1,4 @@
-﻿using System;
-using CsvHelper.Configuration.Attributes;
-using CsvHelper.Configuration;
-using CsvHelper;
-using System.Globalization;
+﻿using CsvHelper.Configuration.Attributes;
 
 public class RainfallRecord
 {
@@ -15,6 +11,9 @@ public class RainfallRecord
     [Name("Rainfall")]
     public int Rainfall { get; set; }
 
+    /// <summary>
+    /// Constructor
+    /// </summary>
 	public RainfallRecord()
     {
     }

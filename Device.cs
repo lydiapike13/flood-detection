@@ -19,6 +19,9 @@ public class Device
     {
     }
 
+    /// <summary>
+    /// Function to print out the device data to the console: ID, name and location.
+    /// </summary>
     internal void PrintDeviceData()
     {
         Console.WriteLine("Device ID: " + DeviceId);
