@@ -11,6 +11,7 @@ public class RainfallByDevice
 
     private List<DateTime> ReadingTimes = new();
     private List<int> RainfallReadings = new();
+    private string Status = string.Empty;
 
     public RainfallByDevice(int id, string name)
     {
@@ -29,6 +30,31 @@ public class RainfallByDevice
         return RainfallReadings.Average();
     }
 
+    internal void CalculateStatus()
+    {
+        if (RainfallReadings.Average() < 10)
+        {
+            Status = "Green";
+        }
+        else if (RainfallReadings.Average() < 15)
+        {
+            Status = "Orange";
+        }
+        else
+        {
+            Status = "Red";
+        }
+        
+        foreach (int reading in RainfallReadings)
+        {
+            if (reading > 30)
+            {
+                Status = "Red";
+            }
+        }
+    }
+
+
     internal void PrintDevice()
     {
         Console.WriteLine("Device ID: " + DeviceId);
@@ -42,6 +68,7 @@ public class RainfallByDevice
         {
             Console.WriteLine(rain);
         }
-        Console.WriteLine("Average Rainfall: " + RainfallReadings.Average());
+        Console.WriteLine("Average Rainfall: " + RainfallReadings.Average() + "mm");
+        Console.WriteLine("Status: " + Status);
     }
 }

@@ -76,6 +76,7 @@ public class CsvMap
 
         foreach (RainfallByDevice device in rainfallByDevice)
         {
+            device.CalculateStatus();
             device.PrintDevice();
             double avg = device.CalculateAverageRainfall();
         }
