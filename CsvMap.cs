@@ -3,46 +3,13 @@ using CsvHelper.Configuration.Attributes;
 using CsvHelper.Configuration;
 using CsvHelper;
 using System.Globalization;
-using static CsvMap;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 public class CsvMap
 {
     /// <summary>
     /// 
     /// </summary>
-    public class RainfallData
-    {
-        [Name("Device ID")]
-        public int DeviceId { get; set; }
-
-        [Name("Time")]
-        public DateTime Time { get; set; }
-
-        [Name("Rainfall")]
-        public int Rainfall {  get; set; }
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    public class DeviceData
-    {
-        [Name("Device ID")]
-        public int DeviceId { get; set; }
-
-        [Name("Device Name")]
-        public string DeviceName { get; set; }
-
-        [Name("Location")]
-        public string Location { get; set; }
-    }
-
-
-    /// <summary>
-    /// 
-    /// </summary>
-    public class RainfallMap : ClassMap<RainfallData>
+    public class RainfallMap : ClassMap<RainfallRecord>
     {
         public RainfallMap()
         {
@@ -55,7 +22,7 @@ public class CsvMap
     /// <summary>
     /// 
     /// </summary>
-    public class DeviceMap : ClassMap<DeviceData>
+    public class DeviceMap : ClassMap<Device>
     {
         public DeviceMap()
         {
@@ -67,38 +34,41 @@ public class CsvMap
 
     public CsvMap(string rain1, string rain2, string deviceList)
     {
-        List<RainfallData> rainfall1 = CsvMapRainfall(rain1);
-        List<RainfallData> rainfall2 = CsvMapRainfall(rain2);
-        List<DeviceData> devices = CsvMapDevice(deviceList);
+        List<RainfallRecord> rainfall1 = CsvMapRainfall(rain1);
+        List<RainfallRecord> rainfall2 = CsvMapRainfall(rain2);
+        List<Device> devices = CsvMapDevice(deviceList);
 
         rainfall1.AddRange(rainfall2);
+        DateTime currentTime = rainfall1[rainfall1.Count - 1].Time;
+
         List<RainfallByDevice> rainfallByDevice = ProcessData(rainfall1, devices);
 
         foreach (RainfallByDevice device in rainfallByDevice)
         {
             device.CalculateStatus();
-            device.PrintDevice();
-            double avg = device.CalculateAverageRainfall();
+            device.Device.PrintDeviceData();
+            device.PrintRainfall();
+            double avg = device.CalculateAverageRainfall(currentTime);
         }
     }
 
-    private List<RainfallByDevice> ProcessData(List<RainfallData> rain, List<DeviceData> devices)
+    private List<RainfallByDevice> ProcessData(List<RainfallRecord> rain, List<Device> devices)
     {
         List<RainfallByDevice> allData = new List<RainfallByDevice>();
 
         // Iterates through all the devices in the device list and creates a new RainfallByDevice object to
         // store all the rainfall readings for that device.
-        foreach (DeviceData device in devices)
+        foreach (Device device in devices)
         {
-            RainfallByDevice rainfallByDevice = new(device.DeviceId, device.DeviceName);
+            RainfallByDevice rainfallByDevice = new(device);
             allData.Add(rainfallByDevice);
         }
 
-        foreach (RainfallData data in rain)
+        foreach (RainfallRecord data in rain)
         {
             foreach (RainfallByDevice device in allData)
             {
-                if (data.DeviceId == device.DeviceId)
+                if (data.DeviceId == device.Device.DeviceId)
                 {
                     device.AddReading(data.Time, data.Rainfall);
                 }
@@ -112,12 +82,12 @@ public class CsvMap
     /// 
     /// </summary>
     /// <param name="path"></param>
-	public List<RainfallData> CsvMapRainfall(string path)
+	public List<RainfallRecord> CsvMapRainfall(string path)
     {
         StreamReader reader = new(path);
         using CsvReader csv = new(reader, CultureInfo.InvariantCulture);
         csv.Context.RegisterClassMap<RainfallMap>();
-        List<RainfallData> rainfallData = csv.GetRecords<RainfallData>().ToList();
+        List<RainfallRecord> rainfallData = csv.GetRecords<RainfallRecord>().ToList();
 
         return rainfallData;
     }
@@ -126,12 +96,12 @@ public class CsvMap
     /// 
     /// </summary>
     /// <param name="path"></param>
-	public List<DeviceData> CsvMapDevice(string path)
+	public List<Device> CsvMapDevice(string path)
     {
         StreamReader reader = new(path);
         using CsvReader csv = new(reader, CultureInfo.InvariantCulture);
         csv.Context.RegisterClassMap<DeviceMap>();
-        List<DeviceData> deviceData = csv.GetRecords<DeviceData>().ToList();
+        List<Device> deviceData = csv.GetRecords<Device>().ToList();
 
         return deviceData;
     }

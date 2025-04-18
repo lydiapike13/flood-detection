@@ -6,17 +6,15 @@ using System.Net.Http.Headers;
 
 public class RainfallByDevice
 {
-    internal int DeviceId { get; set; }
-    private string DeviceName { get; set; }
+    internal Device Device { get; set; }
 
     private List<DateTime> ReadingTimes = new();
     private List<int> RainfallReadings = new();
     private string Status = string.Empty;
 
-    public RainfallByDevice(int id, string name)
+    public RainfallByDevice(Device device)
     {
-        DeviceId = id;
-        DeviceName = name;
+        Device = device;
     }
 
     internal void AddReading(DateTime time, int reading)
@@ -25,9 +23,18 @@ public class RainfallByDevice
         RainfallReadings.Add(reading);
     }
 
-    internal double CalculateAverageRainfall()
+    internal double CalculateAverageRainfall(DateTime currentTime)
     {
-        return RainfallReadings.Average();
+        List<int> recordsWithinFourHours = new List<int>();
+
+        for (int i = 0; i < RainfallReadings.Count; i++)
+        {
+            if (ReadingTimes[i].AddHours(4) >= currentTime)
+            {
+                recordsWithinFourHours.Add(RainfallReadings[i]);
+            }
+        }
+        return recordsWithinFourHours.Average();
     }
 
     internal void CalculateStatus()
@@ -54,21 +61,38 @@ public class RainfallByDevice
         }
     }
 
-
-    internal void PrintDevice()
+    internal string CalculateTrend()
     {
-        Console.WriteLine("Device ID: " + DeviceId);
-        Console.WriteLine("Times:");
-        foreach (DateTime time in ReadingTimes)
+        if (RainfallReadings[0] < RainfallReadings[RainfallReadings.Count - 1])
         {
-            Console.WriteLine(time);
+            return "Increasing";
         }
-        Console.WriteLine("Rainfall:");
-        foreach (int rain in RainfallReadings)
+        else
         {
-            Console.WriteLine(rain);
+            return "Decreasing";
         }
+    }
+
+
+    internal void PrintRainfall()
+    {
         Console.WriteLine("Average Rainfall: " + RainfallReadings.Average() + "mm");
+
+        if (Status == "Red")
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+        }
+        if (Status == "Orange")
+        {
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+        }
+        if (Status == "Green")
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+        }
         Console.WriteLine("Status: " + Status);
+
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.WriteLine("Trend: " + CalculateTrend() + "\n\n");
     }
 }
